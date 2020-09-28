@@ -1,0 +1,105 @@
+<launch>
+
+
+    <!--arg name="tf_world"  default="0.0 0.0 0.0 0.0 0.0 0.0"/-->
+    <!--arg name="tf_world"  default="40.0 -106.5 -0.32 0.0 0.0 110.5"/-->
+    <arg name="tf_world"  default="39.3 -105.0 -0.32 0.0 0.0 110.5"/>
+
+	
+    <rosparam file = "$(find espeleo_locomotion)/config/locomotion_parameters.yaml"
+              command = "load"
+              ns = "">
+    </rosparam>
+
+
+    <node name = "espeleo_locomotion_wheels"
+          pkg = "espeleo_locomotion"
+          type = "espeleo_locomotion_differential.py"
+          respawn = "true"
+          output="screen">
+    </node>
+
+
+    <node name = "espeleo"
+          pkg = "espeleo_bringup"
+          type = "dyn_reconfigure_server.py"
+          respawn = "true"
+          output = "screen">
+    </node>
+
+
+    <node name = "rgb_flip"
+          pkg = "espeleo_mythings"
+          type = "flip_image.py"
+          output = "screen">
+          <remap from = "/image_raw_flipped"   to = "/d435/rgb/image_raw_flipped"/>
+          <remap from = "/camera_info_flipped" to = "/d435/rgb/camera_info"/>
+          <remap from = "/image_raw"           to = "/rgb/image_rect"/>
+          <remap from = "/camera_info"         to = "/rgb/camera_info"/>
+    </node>
+
+
+    <node name = "depth_flip"
+          pkg = "espeleo_mythings"
+          type = "flip_image.py"
+          output = "screen">
+          <remap from = "/image_raw_flipped"   to = "/d435/depth/image_rect_flipped"/>
+          <remap from = "/camera_info_flipped" to = "/d435/depth/camera_info"/>
+          <remap from = "/image_raw"           to = "/depth/image_rect"/>
+          <remap from = "/camera_info"         to = "/depth/camera_info"/>
+    </node>
+
+
+    <node name = "rgb_compress"
+          pkg = "image_transport"
+          type = "republish"
+          args = "raw in:=/rgb/image_rect/
+                  compressed out:=/rgb/image_rect/"
+          output = "screen">
+    </node>
+
+
+    <node name = "depth_compress"
+          pkg  = "image_transport"
+          type = "republish"
+          args = "raw in:=/depth/image_rect/
+                  compressedDepth out:=/depth/image_rect/"
+          output = "screen">
+    </node>
+
+
+    <node name = "tfs_publisher"
+          pkg  = "espeleo_mythings"
+          type = "tower_tfs.py"
+          args = "_tf_world:='$(arg tf_world)'"
+          output = "screen">
+    </node>
+
+
+    <node name   = "rtab_imu_node"
+          pkg    = "espeleo_mythings"
+          type   = "imu_repub.py"
+          args   = "_frame_id:='rtab_imu'"
+          output = "screen">
+    </node>
+
+
+    <node name   = "ekf_imu_node"
+          pkg    = "espeleo_mythings"
+          type   = "imu_repub.py"
+          args   = "_frame_id:='ekf_imu'"
+          output = "screen">
+          <remap from = "/imu/data2"
+                 to = "/imu/data3"/>
+    </node>
+
+
+    <node name = "clock_publisher"
+          pkg  = "espeleo_mythings"
+          type = "clock_pub.py"
+          args = ""
+          output = "screen">
+    </node>
+
+
+</launch>

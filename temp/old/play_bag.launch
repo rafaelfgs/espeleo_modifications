@@ -1,0 +1,11 @@
+<launch>
+
+    <arg name="bag_file"/>
+    
+    <node name="play_node" pkg="rosbag" type="play" args="$(arg bag_file).bag" output="screen"/>
+
+    <node name="republish_node" type="republish" pkg="image_transport" args="compressed in:=/axis/image_raw raw out:=/axis/image_raw"/>
+
+    <node name="proc_node" pkg="image_proc" type="image_proc" ns="axis"/>
+    
+</launch>

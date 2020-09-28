@@ -1,0 +1,37 @@
+<launch>
+
+
+    <arg name = "base_chassis"   default = "0 0 0.145 0 0 0"/>
+    <arg name = "chassis_xsens"  default = "0 0 0.075 0 0 0"/>
+    <arg name = "chassis_os1"    default = "0 0 0.2525 0 0 0"/>
+    <arg name = "chassis_d435i"  default = "0.28 0 0.055 0 0 0"/>
+
+    <arg name = "chassis_base"   default = "0 0 -0.145 0 0 0"/>
+    <arg name = "xsens_chassis"  default = "0 0 -0.075 0 0 0"/>
+    <arg name = "os1_chassis"    default = "0 0 -0.2525 0 0 0"/>
+    <arg name = "d435i_chassis"  default = "-0.28 0 -0.055 0 0 0"/>
+
+
+    <node pkg = "tf"
+          type = "static_transform_publisher"
+          name = "chassis_init_broadcaster"
+          args = "$(arg base_chassis) base_init chassis_init 100"
+          output = "screen">
+    </node>
+
+    <node pkg = "tf"
+          type = "static_transform_publisher"
+          name = "os1_init_broadcaster"
+          args = "$(arg chassis_os1) chassis_init os1_init 100"
+          output = "screen">
+    </node>
+
+    <node pkg = "tf"
+          type = "static_transform_publisher"
+          name = "d435i_init_broadcaster"
+          args = "$(arg chassis_d435i) chassis_init d435i_init 100"
+          output = "screen">
+    </node>
+
+
+</launch>

@@ -1,0 +1,35 @@
+<!-- STATIC TRANSFORMERS BY UFMG USED IN ESPELEOROBO -->
+
+<launch>
+
+    <node pkg="tf" type="static_transform_publisher" name="tf_baselink_chassis" args="0 0 0.15 0 0 0 1 base_link chassis 200" />
+
+    <node pkg="tf" type="static_transform_publisher" name="tf_chassis_lfwheel" args="0.215 0.175 0 0 0 0 1 chassis left_front_wheel 5" />
+
+    <node pkg="tf" type="static_transform_publisher" name="tf_chassis_lmwheel" args="0 0.225 0 0 0 0 1 chassis left_middle_wheel 5" />
+
+    <node pkg="tf" type="static_transform_publisher" name="tf_chassis_lbwheel" args="-0.215 0.175 0 0 0 0 1 chassis left_back_wheel 5" />
+    
+    <node pkg="tf" type="static_transform_publisher" name="tf_chassis_rfwheel" args="0.215 -0.175 0 0 0 0 1 chassis right_front_wheel 5" />
+
+    <node pkg="tf" type="static_transform_publisher" name="tf_chassis_rmwheel" args="0 -0.225 0 0 0 0 1 chassis right_middle_wheel 5" />
+
+    <node pkg="tf" type="static_transform_publisher" name="tf_chassis_rbwheel" args="-0.215 -0.175 0 0 0 0 1 chassis right_back_wheel 5" />
+
+    <node pkg="tf" type="static_transform_publisher" name="tf_chassis_xsens" args="0 0 0.085 0 0 0 1 chassis imu_link 100" />
+
+    <node pkg="tf" type="static_transform_publisher" name="tf_chassis_os1" args="0 0 0.19 0 0 0 1 chassis os1_sensor 100" />
+
+    <node pkg="tf" type="static_transform_publisher" name="tf_chassis_axisfront" args="0.27 0 0.025 0 0 0 1 chassis axis_front_link 30" />
+
+    <node pkg="tf" type="static_transform_publisher" name="tf_chassis_axisback" args="-0.27 0 0.025 0 0 0 1 chassis axis_back_link 30" />
+
+    <node pkg="tf" type="static_transform_publisher" name="tf_chassis_realsense" args="0.27 0 0.07 0 0 0 1 chassis realsense_link 200" />
+
+    <!--node pkg="tf" type="static_transform_publisher" name="tf_chassis_d435" args="0.27 0.015 0.07 0 0 0 1 chassis d435_link 100" /-->
+
+    <!--node pkg="tf" type="static_transform_publisher" name="tf_chassis_decawave" args="-0.15 -0.01 0.085 0 0 0 1 chassis decawave_link 10" /-->
+
+    <!--node pkg="tf" type="static_transform_publisher" name="tf_chassis_kinect" args="0.2 0.0325 0.125 0 0 0 1 chassis kinect_link 30"/-->
+
+</launch>

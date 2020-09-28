@@ -1,0 +1,78 @@
+<launch>
+
+
+    <arg name = "PI"    default = "3.141592654"/>
+    <arg name = "PI_2"  default = "1.570796327"/>
+
+
+
+    <!-- XSENS TFS -->
+
+    <node pkg = "tf"
+          type = "static_transform_publisher"
+          name = "xsens_imu_broadcaster"
+          args = "0 0 0 0 0 0 xsens_link imu_link 100"
+          output = "screen">
+    </node>
+
+
+
+    <!-- OS1 TFS -->
+
+    <node pkg = "tf"
+          type = "static_transform_publisher"
+          name = "os1_sensor_broadcaster"
+          args = "0 0 0 0 0 0 os1_link os1_sensor 100"
+          output = "screen">
+    </node>
+
+    <node pkg = "tf"
+          type = "static_transform_publisher"
+          name = "os1_cloud_broadcaster"
+          args = "0 0 0 0 0 0 os1_sensor os1_cloud 100"
+          output = "screen">
+    </node>
+
+    <node pkg = "tf"
+          type = "static_transform_publisher"
+          name = "os1_imu_broadcaster"
+          args = "0 0 0 0 0 0 os1_sensor os1_imu 100"
+          output = "screen">
+    </node>
+
+
+
+    <!-- D435I TFS -->
+
+    <node pkg = "tf"
+          type = "static_transform_publisher"
+          name = "d435i_color_broadcaster"
+          args = "0 0 0 -$(arg PI_2) $(arg PI_2) 0 d435i_link d435i_color_optical_frame 100"
+          output = "screen">
+    </node>
+
+
+    <node pkg = "tf"
+          type = "static_transform_publisher"
+          name = "d435i_depth_broadcaster"
+          args = "0 0 0 -$(arg PI_2) $(arg PI_2) 0 d435i_link d435i_depth_optical_frame 100"
+          output = "screen">
+    </node>
+
+    <node pkg = "tf"
+          type = "static_transform_publisher"
+          name = "d435i_accel_broadcaster"
+          args = "0 0 0 $(arg PI_2) $(arg PI_2) 0 d435i_link d435i_accel_optical_frame 100"
+          output = "screen">
+    </node>
+
+    <node pkg = "tf"
+          type = "static_transform_publisher"
+          name = "d435i_gyro_broadcaster"
+          args = "0 0 0 $(arg PI_2) $(arg PI_2) 0 d435i_link d435i_gyro_optical_frame 100"
+          output = "screen">
+    </node>
+
+
+
+</launch>

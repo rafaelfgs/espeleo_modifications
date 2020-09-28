@@ -1,0 +1,14 @@
+<launch>
+    
+    <arg name="camera" default="axis"/>
+    <arg name="topics" default="/axis/camera_info
+                                /axis/image_raw/compressed"/>
+
+    <arg name="bag_file"/>
+    <arg name="video_file"/>
+
+    <node name="video_to_msg_node" pkg="video_to_bag" type="video_to_msg.py" args="$(arg video_file).mp4" output="screen"/>
+    
+    <node name="record_bag_node" pkg="rosbag" type="record" args="-O $(arg bag_file).bag $(arg topics)" output="screen"/>
+    
+</launch>
