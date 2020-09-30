@@ -1,0 +1,46 @@
+<launch>
+
+
+    <node pkg = "espeleo_pose_ekf"
+          type = "ekf_broadcaster_ufmg.py"
+          name = "ekf_broadcaster_node"
+          args = "_yaml_file:='$(find espeleo_pose_ekf)/config/espeleo_ufmg.yaml'"
+          output = "screen">
+    </node>
+
+
+    <node pkg = "espeleo_pose_ekf"
+          type = "topic_repub.py"
+          name = "ekf_repub_node"
+          args = "_topics:='Imu /imu/data /ekf/imu ekf_imu'"
+          output = "screen">
+    </node>
+
+
+    <node pkg    = "espeleo_pose_ekf"
+          type   = "espeleo_pose_ekf"
+          name   = "espeleo_pose_ekf"
+          output = "screen">
+
+        <param name = "output_frame"               value = "ekf_init"/>
+        <param name = "base_footprint_frame"       value = "ekf_pose"/>
+        <param name = "sensor_timeout"             value = "1.0"/>
+        <param name = "odom_used"                  value = "true"/>
+        <param name = "imu_used"                   value = "true"/>
+        <param name = "vo_used"                    value = "false"/>
+        <param name = "gps_used"                   value = "false"/>
+        <param name = "debug"                      value = "false"/>
+        <param name = "self_diagnose"              value = "false"/>
+        <param name = "freq"                       value = "10.0"/>
+
+        <remap from = "/odom"                      to = "/odom"/>
+        <remap from = "/imu_data"                  to = "/ekf/imu"/>
+        <remap from = "/vo"                        to = "/camera/pose/sample"/>
+        <remap from = "/gps"                       to = "/fix"/>
+
+        <remap from = "/espeleo_pose_ekf/ekf_odom" to = "/ekf/odom"/>
+
+    </node>
+
+
+</launch>

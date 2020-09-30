@@ -1,0 +1,94 @@
+<robot name = "sensors_link" xmlns:xacro = "http://www.ros.org/wiki/xacro">
+
+
+
+    <xacro:property name = "PI"    value = "3.141592654"/>
+    <xacro:property name = "PI_2"  value = "1.570796327"/>
+
+
+
+    <!-- XSENS TFS -->
+
+    <joint name = "xsens_imu_joint" type = "fixed">
+        <axis   xyz  = "0 0 0"/>
+        <origin xyz  = "-0.0255 -0.01745 -0.0032" rpy = "0 0 0"/>
+        <parent link = "xsens_link"/>
+        <child  link = "imu_link"/>
+    </joint>
+
+    <link name="imu_link"/>
+
+
+
+    <!-- OS1 TFS -->
+
+    <joint name = "os1_sensor_joint" type = "fixed">
+        <axis   xyz  = "0 0 0"/>
+        <origin xyz  = "0 0 0" rpy = "0 0 0"/>
+        <parent link = "os1_link"/>
+        <child  link = "os1_sensor"/>
+    </joint>
+
+    <link name="os1_sensor"/>
+
+    <joint name = "os1_cloud_joint" type = "fixed">
+        <axis   xyz  = "0 0 0"/>
+        <origin xyz  = "0 0 0" rpy = "0 0 ${PI}"/>
+        <parent link = "os1_sensor"/>
+        <child  link = "os1_lidar"/>
+    </joint>
+
+    <link name="os1_lidar"/>
+
+    <joint name = "os1_imu_joint" type = "fixed">
+        <axis   xyz  = "0 0 0"/>
+        <origin xyz  = "0 0 0" rpy = "0 0 0"/>
+        <parent link = "os1_sensor"/>
+        <child  link = "os1_imu"/>
+    </joint>
+
+    <link name="os1_imu"/>
+
+
+
+    <!-- D435I TFS -->
+
+    <joint name = "d435i_color_joint" type = "fixed">
+        <axis   xyz  = "0 0 0"/>
+        <origin xyz  = "0 0 0" rpy = "-${PI_2} ${PI_2} 0"/>
+        <parent link = "d435i_link"/>
+        <child  link = "d435i_color_optical_frame"/>
+    </joint>
+
+    <link name="d435i_color_optical_frame"/>
+
+    <joint name = "d435i_depth_joint" type = "fixed">
+        <axis   xyz  = "0 0 0"/>
+        <origin xyz  = "0 0 0" rpy = "-${PI_2} ${PI_2} 0"/>
+        <parent link = "d435i_link"/>
+        <child  link = "d435i_depth_optical_frame"/>
+    </joint>
+
+    <link name="d435i_depth_optical_frame"/>
+
+    <joint name = "d435i_accel_joint" type = "fixed">
+        <axis   xyz  = "0 0 0"/>
+        <origin xyz  = "0 0 0" rpy = "${PI_2} ${PI_2} 0"/>
+        <parent link = "d435i_link"/>
+        <child  link = "d435i_accel_optical_frame"/>
+    </joint>
+
+    <link name="d435i_accel_optical_frame"/>
+
+    <joint name = "d435i_gyro_joint" type = "fixed">
+        <axis   xyz  = "0 0 0"/>
+        <origin xyz  = "0 0 0" rpy = "${PI_2} ${PI_2} 0"/>
+        <parent link = "d435i_link"/>
+        <child  link = "d435i_gyro_optical_frame"/>
+    </joint>
+
+    <link name="d435i_gyro_optical_frame"/>
+
+
+
+</robot>

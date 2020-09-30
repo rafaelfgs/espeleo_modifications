@@ -1,0 +1,19 @@
+<launch>
+
+    <node name = "rgb_flip_node"
+          pkg = "espeleo_modifications"
+          type = "flip_image.py"
+          output = "screen">
+          <remap from = "/image_raw_flipped"   to = "/d435i/aligned_depth_to_color/image_raw_flipped"/>
+          <remap from = "/image_raw"           to = "/d435i/aligned_depth_to_color/image_raw"/>
+    </node>
+
+    <node name = "depth_flip_node"
+          pkg = "espeleo_modifications"
+          type = "flip_image.py"
+          output = "screen">
+          <remap from = "/image_raw_flipped"   to = "/d435i/depth/image_rect_raw_flipped"/>
+          <remap from = "/image_raw"           to = "/d435i/depth/image_rect_raw"/>
+    </node>
+
+</launch>

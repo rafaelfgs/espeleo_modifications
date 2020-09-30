@@ -1,0 +1,7 @@
+<launch>
+
+    <node name = "espeleo" pkg = "espeleo_bringup" type = "dyn_reconfigure_server.py" respawn = "true"/>
+
+    <include file="$(find espeleo_locomotion)/launch/espeleo_locomotion_differential.launch"/>
+
+</launch>

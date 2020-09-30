@@ -1,0 +1,71 @@
+<robot name = "espeleo_link" xmlns:xacro = "http://www.ros.org/wiki/xacro">
+
+
+
+    <!-- READ POSE PARAMETERS FROM YAML -->
+
+    <xacro:property name = "yaml_file" value = "$(find espeleo_modifications)/config/espeleo_ufmg.yaml" />
+    <xacro:property name = "props"     value = "${load_yaml(yaml_file)}"/>
+
+    <xacro:property name = "base_chassis_xyz"  value="${props['base_chassis_xyz']}" />
+    <xacro:property name = "base_chassis_rpy"  value="${props['base_chassis_rpy']}" />
+
+    <xacro:property name = "chassis_xsens_xyz" value="${props['chassis_xsens_xyz']}" />
+    <xacro:property name = "chassis_xsens_rpy" value="${props['chassis_xsens_rpy']}" />
+
+    <xacro:property name = "chassis_os1_xyz"   value="${props['chassis_os1_xyz']}" />
+    <xacro:property name = "chassis_os1_rpy"   value="${props['chassis_os1_rpy']}" />
+
+    <xacro:property name = "chassis_d435i_xyz" value="${props['chassis_d435i_xyz']}" />
+    <xacro:property name = "chassis_d435i_rpy" value="${props['chassis_d435i_rpy']}" />
+
+
+
+    <!-- INCLUDE SENSORS XACRO -->
+
+    <xacro:include filename = "$(find espeleo_modifications)/urdf/espeleo_sensors_ufmg.xacro"/>
+
+
+
+    <!-- BASE_LINK TFS -->
+
+    <link name="base_link"/>
+
+    <joint name = "chassis_link_joint" type = "fixed">
+        <axis   xyz  = "0 0 0"/>
+        <origin xyz  = "${base_chassis_xyz}" rpy = "${base_chassis_rpy}"/>
+        <parent link = "base_link"/>
+        <child  link = "chassis_link"/>
+    </joint>
+
+    <link name="chassis_link"/>
+
+    <joint name = "xsens_link_joint" type = "fixed">
+        <axis   xyz  = "0 0 0"/>
+        <origin xyz  = "${chassis_xsens_xyz}" rpy = "${chassis_xsens_rpy}"/>
+        <parent link = "chassis_link"/>
+        <child  link = "xsens_link"/>
+    </joint>
+
+    <link name="xsens_link"/>
+
+    <joint name = "os1_link_joint" type = "fixed">
+        <axis   xyz  = "0 0 0"/>
+        <origin xyz  = "${chassis_os1_xyz}" rpy = "${chassis_os1_rpy}"/>
+        <parent link = "chassis_link"/>
+        <child  link = "os1_link"/>
+    </joint>
+
+    <link name="os1_link"/>
+
+    <joint name = "d435i_link_joint" type = "fixed">
+        <axis   xyz  = "0 0 0"/>
+        <origin xyz  = "${chassis_d435i_xyz}" rpy = "${chassis_d435i_rpy}"/>
+        <parent link = "chassis_link"/>
+        <child  link = "d435i_link"/>
+    </joint>
+
+    <link name="d435i_link"/>
+
+
+</robot>

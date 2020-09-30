@@ -1,0 +1,41 @@
+<launch>
+
+    <!-- ESPELEO_SIM -->
+
+    <node name = "espeleo" pkg = "espeleo_bringup" type = "dyn_reconfigure_server.py" respawn = "true"/>
+    <include file="$(find espeleo_locomotion)/launch/espeleo_locomotion_differential.launch"/>
+
+
+    <!-- ESPELEO_TFS -->
+
+    <node pkg = "espeleo_modifications"
+          type = "init_broadcaster_ufmg.py"
+          name = "init_broadcaster_node"
+          args = "_yaml_file:='$(find espeleo_modifications)/config/espeleo_ufmg.yaml'"
+          output = "screen">
+    </node>
+
+    <param name = "robot_description" command = "$(find xacro)/xacro --inorder '$(find espeleo_modifications)/urdf/espeleo_link_ufmg.xacro'"/>
+    <node  name = "robot_link_publisher" pkg = "robot_state_publisher" type = "robot_state_publisher" respawn = "false"/>
+
+
+    <!-- FLIP IMAGES FROM D435I -->
+
+    <node name = "rgb_flip_node"
+          pkg = "espeleo_modifications"
+          type = "flip_image.py"
+          output = "screen">
+          <remap from = "/image_raw_flipped"   to = "/d435i/aligned_depth_to_color/image_raw_flipped"/>
+          <remap from = "/image_raw"           to = "/d435i/aligned_depth_to_color/image_raw"/>
+    </node>
+
+    <node name = "depth_flip_node"
+          pkg = "espeleo_modifications"
+          type = "flip_image.py"
+          output = "screen">
+          <remap from = "/image_raw_flipped"   to = "/d435i/depth/image_rect_raw_flipped"/>
+          <remap from = "/image_raw"           to = "/d435i/depth/image_rect_raw"/>
+    </node>
+
+
+</launch>
