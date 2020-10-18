@@ -47,12 +47,16 @@ class odometry:
         self.alpha_skid = rospy.get_param('espeleo_locomotion/wheeled_kinematic_lambda')
         self.ycir_skid = rospy.get_param('espeleo_locomotion/wheeled_kinematic_ycir')
 
+        # Wheel radius for TF (base_init > chassis_init)
+        self.wheel_radius = 0.145
+
         self.time_counter_aux = 0
         self.ros_init()
 
     def ros_init(self):
 
         rospy.init_node('wheel_odometry_publisher', anonymous=True)
+        rospy.loginfo("Computing Wheel Odometry")
 
         # Times used to integrate velocity to pose
         self.current_time = 0.0
@@ -95,7 +99,12 @@ class odometry:
     def motor6_callback(self, message):
         self.motor_velocity6 = message.velocity[0]
         self.current_time = message.header.stamp.secs + message.header.stamp.nsecs*0.000000001
-        self.odometry_calculation()
+
+        #self.odometry_calculation()
+        if self.last_time > 0.0:
+            self.odometry_calculation()
+        else:
+            self.last_time = self.current_time
 
     def odometry_calculation(self):
 
@@ -161,68 +170,44 @@ class odometry:
 
         # Since all odometry is 6DOF we'll need a quaternion created from yaw
         odom_quat = tf.transformations.quaternion_from_euler(0, 0, self.th)
-
+        
+        # Transform from base_init to chassis_init
+        self.odom_broadcaster.sendTransform(
+            (0., 0., self.wheel_radius),
+            (0., 0., 0., 1.),
+            rospy.Time.from_sec(self.current_time), # rospy.Time.now()
+            "chassis_init", # base_link
+            "base_init", # odom
+        )
+        
         # First, we'll publish the transform over tf
         self.odom_broadcaster.sendTransform(
             (self.x, self.y, 0.),
             odom_quat,
-            rospy.Time.now(),
-            "base_link",
-            "odom"  # odom
+            rospy.Time.from_sec(self.current_time), # rospy.Time.now()
+            "wheel_odom", # base_link
+            "chassis_init", # odom
         )
-
+        
         # next, we'll publish the odometry message over ROS
         odom = Odometry()
-        odom.header.stamp = rospy.Time.now()
-        odom.header.frame_id = "odom"
+        odom.header.stamp = rospy.Time.from_sec(self.current_time) # rospy.Time.now()
+        odom.header.frame_id = "chassis_init" # odom
 
         # set the position
         odom.pose.pose = Pose(Point(self.x, self.y, 0.), Quaternion(*odom_quat))
 
         # set the velocity
-        odom.child_frame_id = "base_link"
+        odom.child_frame_id = "wheel_odom" # base_link
         odom.twist.twist = Twist(Vector3(v_robot, 0, 0), Vector3(0, 0, w_robot))
-
-        # Calculating the covariance based on the angular velocity
-        # if the robot is rotating, the covariance is higher than if its going straight
-        if abs(w_robot) > 0.2:
-            covariance_cons = 0.3
-        else:
-            covariance_cons = 0.05
-
-        odom.pose.covariance[0] = covariance_cons
-        odom.pose.covariance[7] = covariance_cons
-        odom.pose.covariance[35] = 100 * covariance_cons
-
-        odom.pose.covariance[1] = covariance_cons
-        odom.pose.covariance[6] = covariance_cons
-
-        odom.pose.covariance[31] = covariance_cons
-        odom.pose.covariance[11] = covariance_cons
-
-        odom.pose.covariance[30] = 10 * covariance_cons
-        odom.pose.covariance[5] = 10 * covariance_cons
-
-        odom.pose.covariance[14] = 0.1
-        odom.pose.covariance[21] = 0.1
-        odom.pose.covariance[28] = 0.1
-
-        odom.twist.covariance[0] = covariance_cons
-        odom.twist.covariance[7] = covariance_cons
-        odom.twist.covariance[35] = 100 * covariance_cons
-
-        odom.twist.covariance[1] = covariance_cons
-        odom.twist.covariance[6] = covariance_cons
-
-        odom.twist.covariance[31] = covariance_cons
-        odom.twist.covariance[11] = covariance_cons
-
-        odom.twist.covariance[30] = 10 * covariance_cons
-        odom.twist.covariance[5] = 10 * covariance_cons
-
-        odom.twist.covariance[14] = 0.1
-        odom.twist.covariance[21] = 0.1
-        odom.twist.covariance[28] = 0.1
+        
+        k = 0.01 + abs(odom.twist.twist.angular.z)
+        odom.pose.covariance = [      k,     0.0,     0.0,     0.0,     0.0,     0.0,
+                                    0.0,       k,     0.0,     0.0,     0.0,     0.0,
+                                    0.0,     0.0,     1.0,     0.0,     0.0,     0.0,
+                                    0.0,     0.0,     0.0,     1.0,     0.0,     0.0,
+                                    0.0,     0.0,     0.0,     0.0,     1.0,     0.0,
+                                    0.0,     0.0,     0.0,     0.0,     0.0, 100.0*k]
 
         # publish the message
         self.odom_pub.publish(odom)
