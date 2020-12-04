@@ -20,7 +20,7 @@ from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
 from sensor_msgs.msg import JointState
 
 
-from bib_espeleo_differential import espeleo_differential
+#from bib_espeleo_differential import espeleo_differential
 
 class odometry:
     def __init__(self):
@@ -44,19 +44,27 @@ class odometry:
         self.motor_velocity6 = 0
         
         # Skidsteer parameters
-        self.alpha_skid = rospy.get_param('espeleo_locomotion/wheeled_kinematic_lambda')
-        self.ycir_skid = rospy.get_param('espeleo_locomotion/wheeled_kinematic_ycir')
+        self.alpha_skid = 0.9838227539528335
+        self.ycir_skid = 0.3045030420948333
 
         # Wheel radius for TF (base_init > chassis_init)
         self.wheel_radius = 0.145
+        self.robot_width_external = 0.48
 
+        self.reduction_planetary = 111
+        self.reduction_synchronizer = 50.0/26.0
         self.time_counter_aux = 0
+
         self.ros_init()
 
     def ros_init(self):
 
         rospy.init_node('wheel_odometry_publisher', anonymous=True)
         rospy.loginfo("Computing Wheel Odometry")
+        
+	      # Robot mode
+        self.side_mode = int(rospy.get_param("~side_mode", "0"))
+        self.wheels_mode = 6
 
         # Times used to integrate velocity to pose
         self.current_time = 0.0
@@ -108,24 +116,36 @@ class odometry:
 
     def odometry_calculation(self):
 
-        if self.skid_steer:
-            ### Skid-Steering model
+        # velocities of each side of the robot, the average of the wheels velocities in RPM
+        velocity_left_rpm = ((self.motor_velocity1 + self.motor_velocity2 + self.motor_velocity3))/(self.reduction_planetary * self.reduction_synchronizer * 3)
+        # print "Left", velocity_left_rpm
+        velocity_right_rpm = ((self.motor_velocity4 + self.motor_velocity5 + self.motor_velocity6))/(self.reduction_planetary * self.reduction_synchronizer * 3)
+        # print "Right", velocity_right_rpm
 
-            velocity_left, velocity_right = espeleo.left_right_velocity([self.motor_velocity1,  self.motor_velocity2,  self.motor_velocity3,  self.motor_velocity4,  self.motor_velocity5,  self.motor_velocity6])
+        # Changed RPM to m/s constant value from  0.10471675688 to 0.10471975511965977 -> (2*pi)/60
+        # RPM to m/s, and multiplying by the wheel_radius -> (2*pi*radius)/60
+        velocity_right = - (0.10471975511965977) * velocity_right_rpm * self.wheel_radius   
+        velocity_left = (0.10471975511965977) * velocity_left_rpm * self.wheel_radius
+
+        if self.skid_steer:
 
             # Linear velocity
             v_robot = (velocity_right + velocity_left) * (self.alpha_skid / 2)
 
             # Angular velocity
             w_robot = ((velocity_right - velocity_left) * (self.alpha_skid / (2 * self.ycir_skid)))
+            
+            # Change linear velocity according to side mode
+            if self.side_mode == 1:
+                v_robot = -v_robot
+            
+            # Velocity in the XY plane
+            vx_robot = v_robot * cos(self.th)
+            vy_robot = v_robot * sin(self.th)
 
             if self.time_counter_aux == 0:
                 self.last_time = self.current_time
                 self.time_counter_aux = 1
-
-            # Velocity in the XY plane
-            vx_robot = v_robot * cos(self.th)
-            vy_robot = v_robot * sin(self.th)
 
             # Calculating odometry
             dt = self.current_time - self.last_time
@@ -141,8 +161,17 @@ class odometry:
 
 
         else:
-
-            v_robot, w_robot = espeleo.get_espeleo_velocity([self.motor_velocity1,  self.motor_velocity2,  self.motor_velocity3,  self.motor_velocity4,  self.motor_velocity5,  self.motor_velocity6])
+            
+            L = self.robot_width_external/2.0
+        
+            # Linear velocity
+            v_robot = (velocity_right + velocity_left) / 2.0
+            # Angular velocity
+            w_robot = (velocity_right - velocity_left) / L
+            
+            # Change linear velocity according to side mode
+            if self.side_mode == 1:
+                v_robot = -v_robot
             
             # Velocity in the XY plane
             vx_robot = v_robot * cos(self.th)
@@ -217,5 +246,5 @@ class odometry:
 
 
 if __name__ == '__main__':
-    espeleo = espeleo_differential()
+    #espeleo = espeleo_differential()
     odometry_obj = odometry()
