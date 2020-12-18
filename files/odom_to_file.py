@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
 import rospy
-import time
 import os
 from copy import copy
 from nav_msgs.msg import Odometry, Path
+from geometry_msgs.msg import PoseStamped
 
 
 class Odom2File:
@@ -27,7 +27,7 @@ class Odom2File:
         self.t0   = [ 0.0 for x in self.param]
         self.num  = [   0 for x in self.param]
         self.data = [  [] for x in self.param]
-        self.msg  = [None for x in self.param]
+        self.msg  = [  [] for x in self.param]
         self.stop = False
         
         for k in range(len(self.param)):
@@ -46,28 +46,17 @@ class Odom2File:
                 self.t0[k] = msg.header.stamp.to_sec()
                 print("Reading data from %s" % self.param[k][0])
             
-            self.num[k] += 1
-            self.msg[k] = msg
-            
-            self.data[k] += [(self.num[k], msg.header.stamp.to_sec() - self.t0[k], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)]
-            
             if self.param[k][1] == Odometry:
-                
-                self.data[k][self.num[k]-1] = (copy(self.num[k]),
-                                               copy(msg.header.stamp.to_sec() - self.t0[k]),
-                                               copy(msg.pose.pose.position.x),
-                                               copy(msg.pose.pose.position.y),
-                                               copy(msg.pose.pose.position.z),
-                                               copy(msg.pose.pose.orientation.x),
-                                               copy(msg.pose.pose.orientation.y),
-                                               copy(msg.pose.pose.orientation.z),
-                                               copy(msg.pose.pose.orientation.w))
+                self.msg[k] += [PoseStamped()]
+                self.msg[k][self.num[k]].header = copy(msg.header)
+                self.msg[k][self.num[k]].pose = copy(msg.pose.pose)
+                self.num[k] += 1
             
             elif self.param[k][1] == Path:
-                
-                self.data[k][self.num[k]-1] = (copy(self.num[k]),
-                                               copy(msg.header.stamp.to_sec() - self.t0[k]),
-                                               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+                self.msg[k] = copy(msg.poses)
+                for n in [self.num[k]+x for x in range(len(msg.poses)-self.num[k])]:
+                    self.msg[k][n].header = copy(msg.header)
+                self.num[k] = len(msg.poses)
     
     
     def savefile(self):
@@ -77,53 +66,51 @@ class Odom2File:
         
         while k < len(self.data):
             
-            if self.param[k][1] == Path and self.msg[k]:
-                for n in range(self.num[k]):
-                    self.data[k][n] = (self.data[k][n][0], self.data[k][n][1],
-                                       copy(self.msg[k].poses[n].pose.position.x),
-                                       copy(self.msg[k].poses[n].pose.position.y),
-                                       copy(self.msg[k].poses[n].pose.position.z),
-                                       copy(self.msg[k].poses[n].pose.orientation.x),
-                                       copy(self.msg[k].poses[n].pose.orientation.y),
-                                       copy(self.msg[k].poses[n].pose.orientation.z),
-                                       copy(self.msg[k].poses[n].pose.orientation.w))
+            f = self.path + self.param[k][3]
             
-            if len(self.data[k]) > 0:
+            if os.path.exists(f):
+                os.remove(f)
             
-                f = self.path + self.param[k][3]
-                
-                if os.path.exists(f):
-                    os.remove(f)
+            self.file[k] = open(f,"w")
+            self.file[k].write("n,t,px,py,pz,qx,qy,qz,qw")
+            
+            if self.num[k] > 0:
                 
                 print("Saving %s to %s" % (self.param[k][0], self.param[k][3]))
-                
-                self.file[k] = open(f,"w")
-                self.file[k].write("n,t,px,py,pz,qx,qy,qz,qw")
                 
                 p0 = self.param[k][2][:3]
                 q0 = self.param[k][2][3:]
                 
-                #rate = rospy.Rate(1e4)
+                rate = rospy.Rate(1e4)
                 n = 0
                 
-                while not rospy.is_shutdown() and n < len(self.data[k]):
+                while not rospy.is_shutdown() and n < self.num[k]:
                     
-                    p1 = self.data[k][n][2:5]
-                    q1 = self.data[k][n][5:9]   
+                    t = self.msg[k][n].header.stamp.to_sec()
+                    
+                    p1 = (self.msg[k][n].pose.position.x,
+                          self.msg[k][n].pose.position.y,
+                          self.msg[k][n].pose.position.z)
+                    
+                    q1 = (self.msg[k][n].pose.orientation.x,
+                          self.msg[k][n].pose.orientation.y,
+                          self.msg[k][n].pose.orientation.z,
+                          self.msg[k][n].pose.orientation.w)
                     
                     q2 = qq_mult(q0, qq_mult(q1, q_conjugate(q0)))
                     p3 = pp_sum(qp_mult(q0, p1), p0)
                     p2 = pp_sum(qp_mult(q2, p_conjugate(p0)), p3)
                     
-                    s = "\n%d,%+.3f,%+.3f,%+.3f,%+.3f,%+.3f,%+.3f,%+.3f,%+.3f" % (self.data[k][n][:2] + p2 + q2)
+                    s = "\n%d,%014.3f,%+.3f,%+.3f,%+.3f,%+.3f,%+.3f,%+.3f,%+.3f" % ((n+1,) + (t,) + p2 + q2)
                     self.file[k].write(s)
                     
                     n += 1
-                    #rate.sleep()
-                    time.sleep(1e-4)
+                    rate.sleep()
                 
-                self.file[k].close()
+            else:
+                self.file[k].write("n,t,px,py,pz,qx,qy,qz,qw")
                 
+            self.file[k].close()
             k += 1
 
 
