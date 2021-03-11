@@ -57,6 +57,7 @@ class repub:
     def run(self):
         
         rate = rospy.Rate(100)
+        
         while not self.ispub:
             rate.sleep()
         

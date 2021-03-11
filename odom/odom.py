@@ -79,7 +79,7 @@ class odometry:
         self.subscriber_motor6 = rospy.Subscriber("/device6/get_joint_state", JointState, self.motor6_callback)
 
         # odom publisher
-        self.odom_pub = rospy.Publisher("odom_new", Odometry, queue_size=50)
+        self.odom_pub = rospy.Publisher("odom", Odometry, queue_size=50)
         self.vel_pub = rospy.Publisher("robot_vel", Twist, queue_size=1)
 
         # Tf broadcaster
