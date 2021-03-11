@@ -1,0 +1,36 @@
+<launch>
+
+    <arg name = "folder" default = "veloso1"/>
+
+    <node pkg = "pcl_ros"
+          type = "pcd_to_pointcloud"
+          name = "truth_cloud_node"
+          args = "/mnt/WD500/UFMG/DISSERTACAO/results/$(arg folder)/truth_map.pcd
+                  1.0 cloud_pcd:=/truth/cloud_pcd _frame_id:=base_init"
+          output = "screen">
+    </node>
+
+    <node pkg = "pcl_ros"
+          type = "pcd_to_pointcloud"
+          name = "rtab_cloud_node"
+          args = "/mnt/WD500/UFMG/DISSERTACAO/results/$(arg folder)/rtab_map.pcd
+                  1.0 cloud_pcd:=/rtab/cloud_pcd _frame_id:=base_init"
+          output = "screen">
+    </node>
+
+    <node pkg = "pcl_ros"
+          type = "pcd_to_pointcloud"
+          name = "reg_cloud_node"
+          args = "/mnt/WD500/UFMG/DISSERTACAO/results/$(arg folder)/reg_map.pcd
+                  1.0 cloud_pcd:=/reg/cloud_pcd _frame_id:=base_init"
+          output = "screen">
+    </node>
+
+    <node pkg = "rviz"
+          type = "rviz"
+          name = "rviz_node"
+          args = "-d /home/rafael/Dropbox/UFMG/Dissertacao/resultados/$(arg folder)/pcl_compare.rviz"
+          output = "screen">  
+    </node>
+
+</launch>
