@@ -16,7 +16,7 @@ class Odom2File:
         
         rospy.init_node("odom_to_path_node", anonymous=True)
         
-        self.path = "/mnt/WD500/UFMG/DISSERTACAO/results/veloso2/odom_reg5/"
+        self.path = "/mnt/WD500/UFMG/DISSERTACAO/results/odom/"
         
         self.param = [["/ground_truth",        Odometry, (0.00, 0.0, 0.00, 0.0, 0.0, 0.0, 1.0), "truth.txt"],
                       ["/odom",                Odometry, (0.00, 0.0, 0.00, 0.0, 0.0, 0.0, 1.0), "wheel.txt"],

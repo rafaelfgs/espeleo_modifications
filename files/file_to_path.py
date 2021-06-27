@@ -19,7 +19,7 @@ def main_function():
     folder = rospy.get_param("~folder", "cave2")
     
     if folder == "cave2":
-        tf_reg  = rospy.get_param("~tf", "-0.728520 -1.022489 -0.591337 -0.0067226 0.0021616 0.008038 0.9999428")
+        tf_reg  = rospy.get_param("~tf", "0.184526 -0.872643 -0.254430 -0.0004198 0.0085246 0.0030791 0.9999588")
         tf_rtab = rospy.get_param("~tf", "0.171135 0.731557 -0.011839 -0.0014095 0.0076989 -0.015365 0.9998513")
     
     elif folder == "cave3":
@@ -27,7 +27,7 @@ def main_function():
         tf_rtab = rospy.get_param("~tf", "0.044481 -0.017968 0.077054 0.0004048 0.0001445 -0.0024175 0.999997")
         
     elif folder == "veloso1":
-        tf_reg  = rospy.get_param("~tf", "0.017721 0.234458 0.303212 0.0268289 0.0005092 0.001487 0.9996388")
+        tf_reg  = rospy.get_param("~tf", "-0.001333 0.205757 0.215721 0.0174094 -0.0033025 -0.0114731 0.9997772")
         tf_rtab = rospy.get_param("~tf", "0.017516 0.094458 0.430594 0.0031193 0.0218101 0.0021255 0.999755")
         
     elif folder == "veloso2":

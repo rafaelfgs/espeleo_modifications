@@ -26,6 +26,13 @@
           output = "screen">
     </node>
 
+    <node pkg = "espeleo_modifications"
+          type = "file_to_path.py"
+          name = "path_node"
+          args = "_folder:=$(arg folder)"
+          output = "screen">
+    </node>
+
     <node pkg = "rviz"
           type = "rviz"
           name = "rviz_node"
