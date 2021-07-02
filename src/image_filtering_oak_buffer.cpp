@@ -3,6 +3,9 @@
 #include <cv_bridge/cv_bridge.h>
 
 
+const int BUFFER_SIZE = 3;
+
+
 class ImageFiltering
 {
 
@@ -23,7 +26,10 @@ private:
     sensor_msgs::CameraInfo new_color_info_;
     sensor_msgs::CameraInfo new_depth_info_;
 
-    bool reading_;
+    cv::Mat buffer_pixel[BUFFER_SIZE];
+    cv::Mat buffer_index[BUFFER_SIZE];
+
+    bool reading_, first_;
 
 
 public:
@@ -32,13 +38,14 @@ public:
 
     ImageFiltering(): it_(nh_)
     {
+        first_ = true;
         reading_ = true;
 
-        color_sub_ = it_.subscribeCamera("/stereo_rgb_node/color/image", 10, &ImageFiltering::colorCallback, this);
-        depth_sub_ = it_.subscribeCamera("/stereo_rgb_node/stereo/image", 10, &ImageFiltering::depthCallback, this);
+        color_sub_ = it_.subscribeCamera("/stereo_rgb_node/color/image", 10 + BUFFER_SIZE, &ImageFiltering::colorCallback, this);
+        depth_sub_ = it_.subscribeCamera("/stereo_rgb_node/stereo/image", 10 + BUFFER_SIZE, &ImageFiltering::depthCallback, this);
 
-        color_pub_ = it_.advertiseCamera("/stereo_rgb_node/filtered/color/image", 10);
-        depth_pub_ = it_.advertiseCamera("/stereo_rgb_node/filtered/depth/image", 10);
+        color_pub_ = it_.advertiseCamera("/stereo_rgb_node/filtered/color/image", 10 + BUFFER_SIZE);
+        depth_pub_ = it_.advertiseCamera("/stereo_rgb_node/filtered/depth/image", 10 + BUFFER_SIZE);
     }
 
 
@@ -89,8 +96,18 @@ public:
 
         cv::Mat byte_depth = convertFloatToByte(resized_depth, min_range, max_range);
 
-        //cv::Mat mean_depth; cv::blur(byte_depth, mean_depth, cv::Size(mask_size, mask_size));
-        //cv::Mat zeros_depth = mergeZeros(mean_depth, byte_depth);
+        if (first_)
+        {
+            first_ = false;
+
+            for (int k = 0; k < BUFFER_SIZE; k++)
+            {
+                buffer_pixel[k] = byte_depth.clone();
+                buffer_index[k] = cv::Mat(byte_depth.rows, byte_depth.cols, CV_8UC1, k);
+            }
+        }
+
+        cv::Mat sequenced_image = medianSequence(byte_depth);
 
         cv::Mat median_depth; cv::medianBlur(byte_depth, median_depth, mask_size);
         cv::Mat float_depth = convertByteToFloat(median_depth, min_range, max_range);
@@ -143,25 +160,6 @@ public:
     }
 
 
-    cv::Mat mergeZeros(cv::Mat curr_image, cv::Mat ref_image)
-    {
-        int height = curr_image.rows;
-        int width = curr_image.cols;
-        int numel = height * width;
-
-        cv::Mat zeros_image = cv::Mat(height, width, CV_8UC1);
-
-        uint8_t* curr_ptr = curr_image.data;
-        uint8_t* ref_ptr = ref_image.data;
-        uint8_t* zeros_ptr = zeros_image.data;
-
-        for (int n = 0; n < numel; n++)
-            zeros_ptr[n] = ref_ptr[n] > 0 ? curr_ptr[n] : 0;
-
-        return zeros_image;
-    }
-
-
     cv::Mat convertByteToFloat(cv::Mat byte_image, double min_range, double max_range)
     {
         int height = byte_image.rows;
@@ -179,6 +177,75 @@ public:
             float_ptr[n] = byte_ptr[n] > 0 ? prec * byte_ptr[n] + min_range : 0.0;
 
         return float_image;
+    }
+
+
+    cv::Mat medianSequence(cv::Mat image)
+    {
+        int height = image.rows;
+        int width = image.cols;
+        int numel = height * width;
+
+        uint8_t* image_ptr = image.data;
+        uint8_t* pixel_ptr[BUFFER_SIZE];
+        uint8_t* index_ptr[BUFFER_SIZE];
+
+        for (int k = 0; k < BUFFER_SIZE; k++)
+        {
+            pixel_ptr[k] = buffer_pixel[k].data;
+            index_ptr[k] = buffer_index[k].data;
+        }
+
+        for (int n = 0; n < numel; n++)
+        {
+            int idx_old = 0;
+            int idx_new = 0;
+
+            //if(n==100000){ROS_INFO("\n\n");}
+            //if(n==100000){ROS_INFO("n=%d img=%d", n, image_ptr[n]);}
+
+            for (int k = 0; k < BUFFER_SIZE; k++)
+            {
+                //if(n==100000){ROS_INFO("%d", image_ptr[n]);}
+                //if(n==100000){ROS_INFO("%d", pixel_ptr[k][n]);}
+                if (pixel_ptr[k][n] < image_ptr[n])
+                    idx_new = k + 1;
+
+                if (index_ptr[k][n] == 0)
+                    idx_old = k;
+
+                //if(n==100000){ROS_INFO("idx=%d pix=%d", index_ptr[k][n], pixel_ptr[k][n]);}
+
+                index_ptr[k][n]--;
+            }
+
+            //if(n==100000){ROS_INFO("old=%d new=%d", idx_old, idx_new);}
+
+            if (idx_old < idx_new)
+            {
+                idx_new--;
+                for (int i = idx_old; i < idx_new - 1; i++)
+                    pixel_ptr[i][n] = pixel_ptr[i + 1][n];
+            }
+            else
+            {
+                for (int i = idx_old; i >= idx_new + 1; i--)
+                    pixel_ptr[i][n] = pixel_ptr[i - 1][n];
+            }
+
+            //if(n==100000){ROS_INFO("\n");}
+            //for (int k = 0; k < BUFFER_SIZE; k++)
+                //if(n==100000){ROS_INFO("pix=%d idx=%d", pixel_ptr[k][n], index_ptr[k][n]);}
+
+            pixel_ptr[idx_new][n] = image_ptr[n];
+            index_ptr[idx_old][n] = BUFFER_SIZE - 1;
+
+            //if(n==100000){ROS_INFO("\n");}
+            //for (int k = 0; k < BUFFER_SIZE; k++)
+                //if(n==100000){ROS_INFO("pix=%d idx=%d", pixel_ptr[k][n], index_ptr[k][n]);}
+        }
+
+        return buffer_pixel[BUFFER_SIZE / 2];
     }
 
 

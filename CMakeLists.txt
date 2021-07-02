@@ -137,10 +137,11 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/espeleo_modifications_node.cpp)
 
-add_executable(image_filtering_usb src/image_filtering_usb.cpp)
 add_executable(image_filtering_oak src/image_filtering_oak.cpp)
-target_link_libraries(image_filtering_usb ${catkin_LIBRARIES})
 target_link_libraries(image_filtering_oak ${catkin_LIBRARIES})
+
+add_executable(image_filtering_oak_buffer src/image_filtering_oak_buffer.cpp)
+target_link_libraries(image_filtering_oak_buffer ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
